@@ -44,8 +44,9 @@
 const int PORT = 8080;
 // char HTTP_OK[] = "HTTP/1.1 200 OK\r\n";
 // char HTML_CONTENT_TYPE[] = "Content-Type: text/html\r\nContent-Length: 207\r\n\r\n";
-const std::string HTTP_OK = "HTTP/1.1 200 OK\r\n";
-const std::string HTML_CONTENT_TYPE = "Content-Type: text/html\r\n";
+std::string HTTP_OK = "HTTP/1.1 200 OK\r\n";
+std::string HTML_CONTENT_TYPE = "Content-Type: text/html\r\n";
+// std::string HTML_CONTENT_TYPE = "";
 
 void print_info(const std::string& str) {
   std::cerr << "\033[32;1m[INFO]\033[0m " << str << std::endl;
@@ -71,7 +72,7 @@ auto accept_conn(int sockfd) {
 
 
 int main() {
-    std::cout << "Hello world" << std::endl;
+    std::cout << "Server starting..." << std::endl;
 
     int sockfd, newsockfd, port;
     port = PORT;
@@ -121,14 +122,44 @@ int main() {
       }
       std::cout << "Received:\n" << buf << std::endl;
 
+      auto token = strtok(buf, " \t");
+      std::string method{token};
+      token = strtok(NULL, " \t");
+      std::string uri(token);
+      token = strtok(NULL, " \t\r\n");
+      std::string protocol(token);
 
+      std::cout << "Method = " << method << std::endl;
+      std::cout << "URI = " << uri << std::endl;
+      std::cout << "Protocol = " << protocol << std::endl;
+
+      std::string file_to_serve = "404.html";
+      HTML_CONTENT_TYPE = "Content-Type: text/html\r\n";
+      if (uri == "/") {
+        file_to_serve = "index.html";
+      } else if (uri == "/imsorry.jpg") {
+        file_to_serve = "imsorry.jpg";
+        HTML_CONTENT_TYPE = "Content-Type: image/jpeg\r\n";
+      } else {
+        HTTP_OK = "HTTP/1.1 404 Not Found\r\n";
+      }
       // send something
-      std::ifstream t("404.html");
-      std::stringstream buffer;
-      buffer << t.rdbuf();
-      // FILE* fp = fopen("404.html", "r");
-      // auto fp_op = open("404.html", O_RDONLY);
+      auto file_sz = std::filesystem::file_size(file_to_serve);
+      FILE* fp = fopen(file_to_serve.c_str(), "rb");
+      unsigned char* send_buf = new unsigned char[file_sz + 1];
+      send_buf[file_sz] = 0;
+      auto n_fread = fread(send_buf, 1, file_sz, fp);
+      if (n_fread != file_sz) {
+        std::cerr << "Error on reading file "
+          << file_to_serve << "!" << std::endl;
+        std::cerr << "file_sz = " << file_sz << "; n_fread = " << n_fread << std::endl;
+      }
+      // std::ifstream t(file_to_serve);
+      // std::stringstream buffer;
+      // buffer << t.rdbuf();
       ssize_t n_send = 0;
+
+
       // n_send = send(newsockfd, HTTP_OK, sizeof(HTTP_OK), 0);
       // print_info("n_send = " + std::to_string(n_send));
       // n_send = send(newsockfd, HTML_CONTENT_TYPE, sizeof(HTML_CONTENT_TYPE), 0);
@@ -141,16 +172,38 @@ int main() {
       // while ((nread = fread(buf, 1, sizeof(buf), fp)) > 0) {
           // send(newsockfd, buf, nread, 0);
       // }
-      std::cout << buffer.str() << std::endl;
-      std::string resp = HTTP_OK + HTML_CONTENT_TYPE + "Content-Length: "
-        + std::to_string(buffer.str().size()) + "\r\n\r\n" + buffer.str();
+
+
+
+      // std::cout << buffer.str() << std::endl;
+      std::string resp_hdrs = HTTP_OK + HTML_CONTENT_TYPE + "Content-Length: "
+        + std::to_string(file_sz) + "\r\n\r\n";
       // n_send = send(newsockfd, buffer.str().c_str(), buffer.str().size() + 1, 0);
-      n_send = send(newsockfd, resp.c_str(), resp.size() + 1, 0);
+
+      n_send = send(newsockfd, resp_hdrs.c_str(), resp_hdrs.size(), 0);
       print_info("n_send = " + std::to_string(n_send));
       // sendfile(newsockfd, fp_op, NULL, std::filesystem::file_size(p));
       // send(newsockfd, "\r\n\r\n", 4, 0);
+
+      ssize_t rem_file_sz = file_sz;
+      //size_t block_sz = 4096;
+      auto send_buf_ptr = send_buf;
+      while (rem_file_sz > 0) {
+        // if (rem_file_sz < block_sz) {
+        //   block_sz = rem_file_sz;
+        // }
+        n_send = send(newsockfd, send_buf_ptr, rem_file_sz, 0);
+        if (n_send == -1) {
+          print_info("Error on send()!");
+          break;
+        }
+        send_buf_ptr += n_send;
+        rem_file_sz -= n_send;
+      }
+      print_info("n_send = " + std::to_string(n_send));
+      delete[] send_buf;
       close(newsockfd);
-      // fclose(fp);
+      fclose(fp);
     }
     close(sockfd);
     return 0;
