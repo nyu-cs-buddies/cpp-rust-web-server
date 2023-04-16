@@ -62,6 +62,8 @@ int main() {
       }
 
       // print the connection
+      std::cout << std::endl;
+      print_info("New connection! newsockfd = " + std::to_string(newsockfd) + "\n");
       std::cout << "Connection accepted from "
                 << inet_ntoa(client_addr.sin_addr) << ":"
                 << ntohs(client_addr.sin_port) << std::endl;
@@ -93,8 +95,8 @@ int main() {
 
       // send response with headers and content based on the request
       std::string file_to_serve = "404.html";
-      std::string HTTP_STATUS_LINE = "HTTP/1.1 200 OK\r\n";
-      std::string HTML_CONTENT_TYPE = "Content-Type: text/html\r\n";
+      std::string http_status_line = "HTTP/1.1 200 OK\r\n";
+      std::string content_type_line = "Content-Type: text/html\r\n";
       if (uri == "/") {
         file_to_serve = "index.html";
       } else {
@@ -105,14 +107,14 @@ int main() {
       auto filepath = std::filesystem::path(file_to_serve);
       if (!std::filesystem::exists(filepath)) {
         file_to_serve = "404.html";
-        HTTP_STATUS_LINE = "HTTP/1.1 404 Not Found\r\n";
+        http_status_line = "HTTP/1.1 404 Not Found\r\n";
       } else {
         // check the mime type
         auto ext = filepath.extension();
         if (MIME::mime_types.find(ext) != MIME::mime_types.end()) {
-          HTML_CONTENT_TYPE = "Content-Type: " + MIME::mime_types.at(ext) + "\r\n";
+          content_type_line = "Content-Type: " + MIME::mime_types.at(ext) + "\r\n";
         } else {
-          HTML_CONTENT_TYPE = "Content-Type: application/octet-stream\r\n";
+          content_type_line = "Content-Type: application/octet-stream\r\n";
         }
       }
       // ugly way to read files at the moment
@@ -129,8 +131,8 @@ int main() {
 
       // construct the headers
       std::string resp_hdrs = 
-        HTTP_STATUS_LINE
-        + HTML_CONTENT_TYPE
+        http_status_line
+        + content_type_line
         + "Content-Length: "
         + std::to_string(file_sz)
         + "\r\n\r\n";
@@ -153,8 +155,10 @@ int main() {
       }
       print_info("n_send (content) = " + std::to_string(n_send));
       delete[] send_buf;
+      print_info("Closing connection; newsockfd = " + std::to_string(newsockfd) + "\n");
       close(newsockfd);
       fclose(fp);
+      print_info("Connection closed!\n");
     }
     close(sockfd);
     return 0;
