@@ -30,7 +30,7 @@
 *.exe
 *.out
 *.app
-http_server
+bin/
 
 # VSCode
-.vscode
+.vscode/
