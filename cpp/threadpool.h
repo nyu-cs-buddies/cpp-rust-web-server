@@ -6,9 +6,6 @@
 #include <condition_variable>
 #include <mutex>
 
-// static unsigned int exec_count = 0;
-// static std::mutex exec_mutex;
-
 class ThreadPool {
  private:
   std::vector<std::thread> threads;
@@ -85,37 +82,3 @@ class ThreadPool {
     return tasks.size();
   }
 };
-
-
-
-void hello_world() {
-  // {
-  //   std::unique_lock<std::mutex> lock(exec_mutex);
-  //   exec_count++;
-  // }
-  std::cout << "Hello world from " << std::this_thread::get_id() << std::endl;
-}
-
-int main() {
-  ThreadPool pool(4);
-  pool.add_task([]() {
-    std::cout << "Hello, world!" << std::endl;
-  });
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.stop();
-  // sleep(1);
-  // {
-  //   std::unique_lock<std::mutex> lock(exec_mutex);
-  //   std::cout << "exec_count for hello_world() = " << exec_count << std::endl;
-  // }
-  return 0;
-}

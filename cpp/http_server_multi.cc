@@ -14,6 +14,7 @@
 #include <netinet/in.h>
 
 #include "mime_types.h"
+#include "threadpool.h"
 // connection
 // actions: socket, bind, listen, accept, connect, recv, send, close
 // socket, bind, listen
@@ -148,9 +149,12 @@ int main() {
     signal(SIGINT, cleanup_by_break);
 
     // store threads
-    std::vector<std::thread> threads;
+    // std::vector<std::thread> threads;
 
-    // create socket
+    // create a thread pool
+    ThreadPool pool(4);
+
+    // create a socket
     int port = PORT;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
@@ -196,7 +200,8 @@ int main() {
                 << ntohs(client_addr.sin_port) << std::endl;
 
       // create a new thread to handle the request
-      threads.push_back(std::thread(handle_connection, newsockfd));
+      // threads.push_back(std::thread(handle_connection, newsockfd));
+      pool.add_task(std::bind(handle_connection, newsockfd));
     }
 
     print_info("Stop accepting connections...\n");
@@ -204,10 +209,11 @@ int main() {
     // join all threads
     // std::cout << "Joining threads..." << std::endl;
     // std::cout << "threads.size() = " << threads.size() << std::endl;
-    print_info("Joining " + std::to_string(threads.size()) + " threads...\n");
-    for (auto& t : threads) {
-      t.join();
-    }
+    // print_info("Joining " + std::to_string(threads.size()) + " threads...\n");
+    // for (auto& t : threads) {
+    //   t.join();
+    // }
+    pool.stop();
 
     // close the socket
     close(sockfd);
