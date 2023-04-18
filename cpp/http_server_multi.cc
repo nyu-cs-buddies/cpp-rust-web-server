@@ -65,12 +65,26 @@ void handle_connection(int newsockfd) {
               << std::endl;
   }
 
+  // TODO(allenpthuang): something might go wrong here; investigate.
+  // workaround atm: check token != NULL
+  std::string method, uri, protocol;
   auto token = strtok(buf, " \t\r\n");
-  std::string method(token);
+  if (token != NULL) {
+    method = token;
+  }
+  // std::string method(token);
+
   token = strtok(NULL, " \t");
-  std::string uri(token);
+  if (token != NULL) {
+    uri = token;
+  }
+  // std::string uri(token);
+  
   token = strtok(NULL, " \t\r\n");
-  std::string protocol(token);
+  if (token != NULL) {
+    protocol = token;
+  }
+  // std::string protocol(token);
 
   if (verbose) {
     std::cout << "=== Parsed HTTP request ===" << std::endl
@@ -89,6 +103,8 @@ void handle_connection(int newsockfd) {
   } else if (uri == "/sleep") {
     sleep(5);
     file_to_serve = "index.html";
+  } else if (uri.empty()) {
+    file_to_serve = "404.html";
   } else {
     file_to_serve = uri.substr(1);
   }
@@ -146,7 +162,11 @@ void handle_connection(int newsockfd) {
   if (verbose) print_info("n_send (content) = " + std::to_string(n_send) + "\n");
   delete[] send_buf;
   if (verbose) print_info("Closing connection; newsockfd = " + std::to_string(newsockfd) + "\n");
-  close(newsockfd);
+  auto close_ret = close(newsockfd);
+  if (close_ret == -1) {
+    print_error("Error on close()!\n");
+    exit(1);
+  }
   fclose(fp);
   if (verbose) print_info("Connection closed!\n");
 }
