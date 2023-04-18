@@ -15,7 +15,7 @@ fn main() {
     // parsing the command line arguments
     let args: Vec<String> = env::args().collect();
     if args.len() != 4 {
-        println!("Usage: {} <addr> <port> <num_threads>", args[0]);
+        println!("Usage: {} <addr> <port> <num_threads>", "cargo run --");
         println!("Using default values: {} {} {}", addr, port, num_threads);
     } else {
         addr = &args[1];
