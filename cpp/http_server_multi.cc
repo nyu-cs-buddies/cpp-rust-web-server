@@ -14,6 +14,7 @@
 #include <netinet/in.h>
 
 #include "mime_types.h"
+#include "threadpool.h"
 // connection
 // actions: socket, bind, listen, accept, connect, recv, send, close
 // socket, bind, listen
@@ -147,16 +148,14 @@ int main() {
     // signal handler
     signal(SIGINT, cleanup_by_break);
 
-    // store threads
-    std::vector<std::thread> threads;
-
-    // create socket
+    // create a socket
     int port = PORT;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         std::cerr << "Error creating socket" << std::endl;
         return 1;
-    }
+    } 
+
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     // server_addr.sin_addr.s_addr = INADDR_ANY;
@@ -176,10 +175,11 @@ int main() {
               << ntohs(server_addr.sin_port)
               << std::endl;
 
+    // create a thread pool
+    ThreadPool pool(4);
 
     // accept
     while (exit_flag == 0) {
-      // bool siginted = false;
       struct sockaddr_in client_addr;
       socklen_t client_len = sizeof(client_addr);
       int newsockfd = accept(sockfd, (struct sockaddr*) &client_addr, &client_len);
@@ -195,19 +195,12 @@ int main() {
                 << inet_ntoa(client_addr.sin_addr) << ":"
                 << ntohs(client_addr.sin_port) << std::endl;
 
-      // create a new thread to handle the request
-      threads.push_back(std::thread(handle_connection, newsockfd));
+      // add the task to the thread pool
+      pool.add_task(std::bind(handle_connection, newsockfd));
     }
 
-    print_info("Stop accepting connections...\n");
-
-    // join all threads
-    // std::cout << "Joining threads..." << std::endl;
-    // std::cout << "threads.size() = " << threads.size() << std::endl;
-    print_info("Joining " + std::to_string(threads.size()) + " threads...\n");
-    for (auto& t : threads) {
-      t.join();
-    }
+    print_info("Stop accepting connections and finish what's left...\n");
+    pool.stop();
 
     // close the socket
     close(sockfd);
