@@ -23,6 +23,7 @@
 
 const int PORT = 8080;
 const char IP[] = "0.0.0.0";
+const int DEFAULT_NUM_THREADS = 4;
 
 static sig_atomic_t exit_flag = 0;
 static int sockfd;
@@ -144,11 +145,15 @@ void handle_connection(int newsockfd) {
 
 
 int main(int argc, char* argv[]) {
+    // some default values
     int port = PORT;
     std::string ip = IP;
+    int num_threads = DEFAULT_NUM_THREADS;
+    auto path = std::filesystem::path("../web_root");
+
     // args parsing
     int opt;
-    while ((opt = getopt(argc, argv, "a:p:h")) != -1) {
+    while ((opt = getopt(argc, argv, "a:p:t:d:h")) != -1) {
       switch (opt) {
         case 'a':
           ip = optarg;
@@ -156,14 +161,29 @@ int main(int argc, char* argv[]) {
         case 'p':
           port = atoi(optarg);
           break;
+        case 't':
+          num_threads = atoi(optarg);
+          break;
+        case 'd':
+          path = std::filesystem::path(optarg);
+          break;
         case 'h':
-          std::cout << "Usage: " << argv[0] << " [-a ip] [-p port]" << std::endl;
+          std::cout << "Usage: "
+                    << argv[0]
+                    << " [-a ipaddr] [-p port] [-t num_threads] [-d web_root]"
+                    << std::endl;
           return 0;
         default:
-          std::cerr << "Usage: " << argv[0] << " [-a ip] [-p port]" << std::endl;
+          std::cerr << "Usage: "
+                    << argv[0]
+                    << " [-a ipaddr] [-p port] [-t num_threads] [-d web_root]"
+                    << std::endl;
           return 1;
       }
     }
+
+    // set the current path for web_root
+    std::filesystem::current_path(path);
 
     std::cout << "Server starting..." << std::endl;
 
@@ -197,7 +217,7 @@ int main(int argc, char* argv[]) {
               << std::endl;
 
     // create a thread pool
-    ThreadPool pool(4);
+    ThreadPool pool(num_threads);
 
     // accept
     while (exit_flag == 0) {

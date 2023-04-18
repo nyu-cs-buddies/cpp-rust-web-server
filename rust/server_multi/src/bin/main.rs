@@ -5,7 +5,7 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 use std::io::prelude::*;
 use std::env;
-
+use std::path::Path;
 
 fn main() {
     // some default values here
@@ -14,13 +14,24 @@ fn main() {
     let mut num_threads: usize = 4;
     // parsing the command line arguments
     let args: Vec<String> = env::args().collect();
-    if args.len() != 4 {
-        println!("Usage: {} <addr> <port> <num_threads>", "cargo run --");
-        println!("Using default values: {} {} {}", addr, port, num_threads);
-    } else {
+    if args.len() == 5 {
         addr = &args[1];
         port = &args[2];
         num_threads = args[3].parse::<usize>().unwrap();
+        let web_dir = Path::new(&args[4]);
+        assert!(env::set_current_dir(&web_dir).is_ok());
+    } else if args.len() == 4 {
+        addr = &args[1];
+        port = &args[2];
+        num_threads = args[3].parse::<usize>().unwrap();
+        let web_dir = Path::new("../../web_root");
+        assert!(env::set_current_dir(&web_dir).is_ok());
+    } else {
+        println!("Usage: cargo run -- <ipaddr> <port> <num_threads> <web_root>");
+        println!("Using default values: {} {} {}, and serving the default web_root",
+                 addr, port, num_threads);
+        let web_dir = Path::new("../../web_root");
+        assert!(env::set_current_dir(&web_dir).is_ok());
     }
 
     let listen_to = format!("{}:{}", addr, port);
