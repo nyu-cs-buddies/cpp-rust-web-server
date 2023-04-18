@@ -4,14 +4,32 @@ use std::fs;
 use std::net::TcpListener;
 use std::net::TcpStream;
 use std::io::prelude::*;
+use std::env;
 
 
 fn main() {
+    // some default values here
+    let mut addr = "0.0.0.0";
+    let mut port = "8080";
+    let mut num_threads: usize = 4;
+    // parsing the command line arguments
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 4 {
+        println!("Usage: {} <addr> <port> <num_threads>", args[0]);
+        println!("Using default values: {} {} {}", addr, port, num_threads);
+    } else {
+        addr = &args[1];
+        port = &args[2];
+        num_threads = args[3].parse::<usize>().unwrap();
+    }
+
+    let listen_to = format!("{}:{}", addr, port);
+
     // listening to the TCP connection
     let listener = 
-    TcpListener::bind("0.0.0.0:7878").unwrap();
+    TcpListener::bind(listen_to).unwrap();
 
-    let pool = server_multi::ThreadPool::new(4);
+    let pool = server_multi::ThreadPool::new(num_threads);
 
     for stream in listener.incoming() {
         let stream = stream.unwrap();
