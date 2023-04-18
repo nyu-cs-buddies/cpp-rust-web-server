@@ -21,19 +21,13 @@
 // accept, connect (blocking)
 // recv (blocking), send
 
+bool verbose = false;
 const int PORT = 8080;
 const char IP[] = "0.0.0.0";
 const int DEFAULT_NUM_THREADS = 4;
 
 static sig_atomic_t exit_flag = 0;
 static int sockfd;
-
-void cleanup_by_break(int sig) {
-  std::cout << "\nExiting by break" << std::endl;
-  exit_flag = 1;
-  shutdown(sockfd, SHUT_RDWR);
-  signal(SIGINT, SIG_DFL);
-}
 
 void print_info(const std::string& str) {
   std::cerr << "\033[32;1m[INFO]\033[0m " << str;
@@ -43,21 +37,33 @@ void print_error(const std::string& str) {
   std::cerr << "\033[31;1m[ERROR]\033[0m " << str;
 }
 
+void cleanup_by_break(int sig) {
+  std::cout << std::endl;
+  print_info("Exiting by break\n");
+  exit_flag = 1;
+  shutdown(sockfd, SHUT_RDWR);
+  signal(SIGINT, SIG_DFL);
+}
+
 void handle_connection(int newsockfd) {
-  print_info("Connection accepted; newsockfd = " + std::to_string(newsockfd) + "\n");
-  std::stringstream tid;
-  tid << std::this_thread::get_id();
-  print_info("Handled by thread " + tid.str() + "\n");
+  if (verbose) {
+    print_info("Connection accepted; newsockfd = " + std::to_string(newsockfd) + "\n");
+    std::stringstream tid;
+    tid << std::this_thread::get_id();
+    print_info("Handled by thread " + tid.str() + "\n");
+  }
   char buf[1024] = {0};
   // recv to buf
   int n = recv(newsockfd, buf, 1023, 0);
   if (n < 0) {
-      std::cerr << "Error reading from socket" << std::endl;
+      print_error("Error reading from socket!\n");
   }
-  std::cout << "=== Received HTTP request ===\n"
-            << buf
-            << "=============================\n"
-            << std::endl;
+  if (verbose) {
+    std::cout << "=== Received HTTP request ===\n"
+              << buf
+              << "=============================\n"
+              << std::endl;
+  }
 
   auto token = strtok(buf, " \t");
   std::string method{token};
@@ -66,11 +72,13 @@ void handle_connection(int newsockfd) {
   token = strtok(NULL, " \t\r\n");
   std::string protocol(token);
 
-  std::cout << "=== Parsed HTTP request ===" << std::endl
-            << "Method = " << method << std::endl
-            << "URI = " << uri << std::endl
-            << "Protocol = " << protocol << std::endl
-            << "===========================" << std::endl;
+  if (verbose) {
+    std::cout << "=== Parsed HTTP request ===" << std::endl
+              << "Method = " << method << std::endl
+              << "URI = " << uri << std::endl
+              << "Protocol = " << protocol << std::endl
+              << "===========================" << std::endl;
+  }
 
   // send response with headers and content based on the request
   std::string file_to_serve = "404.html";
@@ -122,7 +130,7 @@ void handle_connection(int newsockfd) {
   // send it over the socket
   ssize_t n_send = 0;
   n_send = send(newsockfd, resp_hdrs.c_str(), resp_hdrs.size(), 0);
-  print_info("n_send (headers) = " + std::to_string(n_send) + "\n");
+  if (verbose) print_info("n_send (headers) = " + std::to_string(n_send) + "\n");
 
   ssize_t rem_file_sz = file_sz;
   auto send_buf_ptr = send_buf;
@@ -135,12 +143,12 @@ void handle_connection(int newsockfd) {
     send_buf_ptr += n_send;
     rem_file_sz -= n_send;
   }
-  print_info("n_send (content) = " + std::to_string(n_send) + "\n");
+  if (verbose) print_info("n_send (content) = " + std::to_string(n_send) + "\n");
   delete[] send_buf;
-  print_info("Closing connection; newsockfd = " + std::to_string(newsockfd) + "\n");
+  if (verbose) print_info("Closing connection; newsockfd = " + std::to_string(newsockfd) + "\n");
   close(newsockfd);
   fclose(fp);
-  print_info("Connection closed!\n");
+  if (verbose) print_info("Connection closed!\n");
 }
 
 
@@ -153,7 +161,7 @@ int main(int argc, char* argv[]) {
 
     // args parsing
     int opt;
-    while ((opt = getopt(argc, argv, "a:p:t:d:h")) != -1) {
+    while ((opt = getopt(argc, argv, "a:p:t:d:vh")) != -1) {
       switch (opt) {
         case 'a':
           ip = optarg;
@@ -167,16 +175,23 @@ int main(int argc, char* argv[]) {
         case 'd':
           path = std::filesystem::path(optarg);
           break;
+        case 'v':
+          verbose = true;
+          break;
         case 'h':
           std::cout << "Usage: "
                     << argv[0]
                     << " [-a ipaddr] [-p port] [-t num_threads] [-d web_root]"
+                    << std::endl
+                    << "Add -v for verbose mode"
                     << std::endl;
           return 0;
         default:
           std::cerr << "Usage: "
                     << argv[0]
                     << " [-a ipaddr] [-p port] [-t num_threads] [-d web_root]"
+                    << std::endl
+                    << "Add -v for verbose mode"
                     << std::endl;
           return 1;
       }
@@ -185,7 +200,7 @@ int main(int argc, char* argv[]) {
     // set the current path for web_root
     std::filesystem::current_path(path);
 
-    std::cout << "Server starting..." << std::endl;
+    print_info("Server starting...\n");
 
     // signal handler
     signal(SIGINT, cleanup_by_break);
@@ -210,7 +225,7 @@ int main(int argc, char* argv[]) {
     }
 
     // listen
-    listen(sockfd, 5);
+    listen(sockfd, 128);
     std::cout << "Listening to "
               << inet_ntoa(server_addr.sin_addr) << ":"
               << ntohs(server_addr.sin_port)
@@ -230,12 +245,13 @@ int main(int argc, char* argv[]) {
       }
 
       // print the connection
-      std::cout << std::endl;
-      print_info("New connection! newsockfd = " + std::to_string(newsockfd) + "\n");
-      std::cout << "Connection accepted from "
-                << inet_ntoa(client_addr.sin_addr) << ":"
-                << ntohs(client_addr.sin_port) << std::endl;
-
+      if (verbose) {
+        std::cout << std::endl;
+        print_info("New connection! newsockfd = " + std::to_string(newsockfd) + "\n");
+        std::cout << "Connection accepted from "
+                  << inet_ntoa(client_addr.sin_addr) << ":"
+                  << ntohs(client_addr.sin_port) << std::endl;
+      }
       // add the task to the thread pool
       pool.add_task(std::bind(handle_connection, newsockfd));
     }
@@ -245,5 +261,6 @@ int main(int argc, char* argv[]) {
 
     // close the socket
     close(sockfd);
+    print_info("Bye!\n");
     return 0;
 }
