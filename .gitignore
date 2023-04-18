@@ -37,3 +37,7 @@ bin/
 
 # Rust
 rust/*/target/
+
+# External utilities
+ext_utils/
+
