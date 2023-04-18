@@ -34,3 +34,6 @@ bin/
 
 # VSCode
 .vscode/
+
+# Rust
+rust/*/target/

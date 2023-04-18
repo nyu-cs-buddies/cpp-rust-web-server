@@ -22,7 +22,7 @@
 // recv (blocking), send
 
 const int PORT = 8080;
-const char IP[] = "192.168.1.87";
+const char IP[] = "0.0.0.0";
 
 static sig_atomic_t exit_flag = 0;
 static int sockfd;
@@ -78,7 +78,8 @@ void handle_connection(int newsockfd) {
   if (uri == "/") {
     file_to_serve = "index.html";
   } else if (uri == "/sleep") {
-    sleep(10);
+    sleep(5);
+    file_to_serve = "index.html";
   } else {
     file_to_serve = uri.substr(1);
   }
@@ -142,14 +143,34 @@ void handle_connection(int newsockfd) {
 }
 
 
-int main() {
+int main(int argc, char* argv[]) {
+    int port = PORT;
+    std::string ip = IP;
+    // args parsing
+    int opt;
+    while ((opt = getopt(argc, argv, "a:p:h")) != -1) {
+      switch (opt) {
+        case 'a':
+          ip = optarg;
+          break;
+        case 'p':
+          port = atoi(optarg);
+          break;
+        case 'h':
+          std::cout << "Usage: " << argv[0] << " [-a ip] [-p port]" << std::endl;
+          return 0;
+        default:
+          std::cerr << "Usage: " << argv[0] << " [-a ip] [-p port]" << std::endl;
+          return 1;
+      }
+    }
+
     std::cout << "Server starting..." << std::endl;
 
     // signal handler
     signal(SIGINT, cleanup_by_break);
 
     // create a socket
-    int port = PORT;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         std::cerr << "Error creating socket" << std::endl;
@@ -159,7 +180,7 @@ int main() {
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     // server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_addr.s_addr = inet_addr(IP);
+    server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
     server_addr.sin_port = htons(port);
 
     // bind the socket fd and the address
