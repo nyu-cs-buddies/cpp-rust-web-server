@@ -65,8 +65,8 @@ void handle_connection(int newsockfd) {
               << std::endl;
   }
 
-  auto token = strtok(buf, " \t");
-  std::string method{token};
+  auto token = strtok(buf, " \t\r\n");
+  std::string method(token);
   token = strtok(NULL, " \t");
   std::string uri(token);
   token = strtok(NULL, " \t\r\n");
