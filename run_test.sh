@@ -88,7 +88,7 @@ for req_size in ${total_requests_size[@]}; do
 
         # Start the siege
         result_file="${test_results_dir}/cpp_n_threads_${num_threads}_reqsize_${req_size}_filesize_${file_sizes[2]}.txt"
-        echo "This is the results from cpp version with ${num_threads} threads, ${req_size} reqs and ${file_sizes[2]} file size." > ${result_file}
+        echo "This is the results from cpp version with ${num_threads} threads, ${req_size} reqs and ${file_sizes[2]} file size." | tee ${result_file}
         ${bench_tool_bin} -c ${num_threads} \
             -r $(($req_size / $num_threads)) \
             ${base_url}:${port_cpp}/${file_sizes[2]} \
@@ -111,7 +111,7 @@ for req_size in ${total_requests_size[@]}; do
 
         # Start the siege
         result_file="${test_results_dir}/cpp_n_threads_${fixed_num_threads}_reqsize_${req_size}_filesize_${file_size}.txt"
-        echo "This is the results from cpp version with ${fixed_num_threads} threads, ${req_size} reqs and ${file_size} file size." > ${result_file}
+        echo "This is the results from cpp version with ${fixed_num_threads} threads, ${req_size} reqs and ${file_size} file size." | tee ${result_file}
         ${bench_tool_bin} -c ${fixed_num_threads} \
             -r $(($req_size / $num_threads)) \
             ${base_url}:${port_cpp}/${file_size} \
@@ -134,7 +134,7 @@ for file_size in ${file_sizes[@]}; do
 
         # Start the siege
         result_file="${test_results_dir}/cpp_n_threads_${num_threads}_filesize_${file_size}_siege_time_${siege_time}.txt"
-        echo "This is the results from cpp version with ${num_threads} threads, ${file_size} file size and ${siege_time} siege time." > ${result_file}
+        echo "This is the results from cpp version with ${num_threads} threads, ${file_size} file size and ${siege_time} siege time." | tee ${result_file}
         ${bench_tool_bin} -c ${num_threads} -t ${siege_time} \
             ${base_url}:${port_cpp}/${file_size} \
             |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
@@ -161,7 +161,7 @@ for req_size in ${total_requests_size[@]}; do
 
         # Start the siege
         result_file="${test_results_dir}/rust_n_threads_${num_threads}_reqsize_${req_size}_filesize_${file_sizes[2]}.txt"
-        echo "This is the results from rust version with ${num_threads} threads, ${req_size} reqs and ${file_sizes[2]} file size." > ${result_file}
+        echo "This is the results from rust version with ${num_threads} threads, ${req_size} reqs and ${file_sizes[2]} file size." | tee ${result_file}
         ${bench_tool_bin} -c ${num_threads} \
             -r $(($req_size / $num_threads)) \
             ${base_url}:${port_rust}/${file_sizes[2]} \
@@ -184,7 +184,7 @@ for req_size in ${total_requests_size[@]}; do
 
         # Start the siege
         result_file="${test_results_dir}/rust_n_threads_${fixed_num_threads}_reqsize_${req_size}_filesize_${file_size}.txt"
-        echo "This is the results from rust version with ${fixed_num_threads} threads, ${req_size} reqs and ${file_size} file size." > ${result_file}
+        echo "This is the results from rust version with ${fixed_num_threads} threads, ${req_size} reqs and ${file_size} file size." | tee ${result_file}
         ${bench_tool_bin} -c ${fixed_num_threads} \
             -r $(($req_size / $num_threads)) \
             ${base_url}:${port_rust}/${file_size} \
@@ -207,7 +207,7 @@ for file_size in ${file_sizes[@]}; do
 
         # Start the siege
         result_file="${test_results_dir}/rust_n_threads_${num_threads}_filesize_${file_size}_siege_time_${siege_time}.txt"
-        echo "This is the results from rust version with ${num_threads} threads, ${file_size} file size and ${siege_time} siege time." > ${result_file}
+        echo "This is the results from rust version with ${num_threads} threads, ${file_size} file size and ${siege_time} siege time." | tee ${result_file}
         ${bench_tool_bin} -c ${num_threads} -t ${siege_time} \
             ${base_url}:${port_rust}/${file_size} \
             |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
