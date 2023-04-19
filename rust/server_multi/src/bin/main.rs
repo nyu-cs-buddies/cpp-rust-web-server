@@ -61,6 +61,15 @@ fn handle_connection(mut stream: TcpStream) {
     let sleep = b"GET /sleep HTTP/1.1\r\n";
     let pic_404 = b"GET /imsorry.jpg HTTP/1.1\r\n";
 
+    // TODO(allenpthuang): prettify this section
+    let test_100 = b"GET /100 HTTP/1.1\r\n";
+    let test_1000 = b"GET /1000 HTTP/1.1\r\n";
+    let test_10000 = b"GET /10000 HTTP/1.1\r\n";
+    let test_100000 = b"GET /100000 HTTP/1.1\r\n";
+    let test_1000000 = b"GET /1000000 HTTP/1.1\r\n";
+    let test_10000000 = b"GET /10000000 HTTP/1.1\r\n";
+
+
     let(status_line, filename, mime_type) = 
         if buffer.starts_with(get) {
             ("HTTP/1.1 200 OK", "index.html", "text/html")
@@ -71,6 +80,24 @@ fn handle_connection(mut stream: TcpStream) {
         }
         else if buffer.starts_with(pic_404) {
             ("HTTP/1.1 200 OK", "imsorry.jpg", "image/jpg")
+        }
+        else if buffer.starts_with(test_100) {
+            ("HTTP/1.1 200 OK", "100", "application/octet-stream")
+        }
+        else if buffer.starts_with(test_1000) {
+            ("HTTP/1.1 200 OK", "1000", "application/octet-stream")
+        }
+        else if buffer.starts_with(test_10000) {
+            ("HTTP/1.1 200 OK", "10000", "application/octet-stream")
+        }
+        else if buffer.starts_with(test_100000) {
+            ("HTTP/1.1 200 OK", "100000", "application/octet-stream")
+        }
+        else if buffer.starts_with(test_1000000) {
+            ("HTTP/1.1 200 OK", "1000000", "application/octet-stream")
+        }
+        else if buffer.starts_with(test_10000000) {
+            ("HTTP/1.1 200 OK", "10000000", "application/octet-stream")
         }
         else {
             ("HTTP/1.1 404 NOT FOUND", "404.html", "text/html")
