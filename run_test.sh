@@ -93,7 +93,7 @@ for req_size in ${total_requests_size[@]}; do
             ${base_url}:${port_cpp}/${file_sizes[2]} \
             |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
         
-        kill -9 $cpp_pid
+        kill -SIGINT $cpp_pid
     done
 done
 
@@ -116,7 +116,7 @@ for req_size in ${total_requests_size[@]}; do
             ${base_url}:${port_cpp}/${file_size} \
             |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
         
-        kill -9 $cpp_pid
+        kill -SIGINT $cpp_pid
     done
 done
 
@@ -138,7 +138,7 @@ for file_size in ${file_sizes[@]}; do
             ${base_url}:${port_cpp}/${file_size} \
             |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
         
-        kill -9 $cpp_pid
+        kill -SIGINT $cpp_pid
     done
 done
 
@@ -196,7 +196,7 @@ done
 # Run test: Type C
 for file_size in ${file_sizes[@]}; do
     for num_threads in ${num_threads_list[@]}; do
-        pport_rust=$((${RANDOM} + 7878))
+        port_rust=$((${RANDOM} + 7878))
         # Run rust version and test
         cd rust/server_multi && cargo run -- 0.0.0.0 ${port_rust} ${num_threads} &
         rust_pid=$!
