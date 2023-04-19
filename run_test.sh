@@ -1,4 +1,5 @@
 #!/bin/bash
+set -m
 
 # fallback to ab on the system
 bench_tool_bin=$(command -v ab)
@@ -92,8 +93,8 @@ for req_size in ${total_requests_size[@]}; do
             -r $(($req_size / $num_threads)) \
             ${base_url}:${port_cpp}/${file_sizes[2]} \
             |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
-        
-        kill -SIGINT $cpp_pid
+
+        kill -SIGINT -- -${cpp_pid}
     done
 done
 
@@ -116,7 +117,7 @@ for req_size in ${total_requests_size[@]}; do
             ${base_url}:${port_cpp}/${file_size} \
             |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
         
-        kill -SIGINT $cpp_pid
+        kill -SIGINT -- -${cpp_pid}
     done
 done
 
@@ -138,7 +139,7 @@ for file_size in ${file_sizes[@]}; do
             ${base_url}:${port_cpp}/${file_size} \
             |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
         
-        kill -SIGINT $cpp_pid
+        kill -SIGINT -- -${cpp_pid}
     done
 done
 
@@ -166,7 +167,7 @@ for req_size in ${total_requests_size[@]}; do
             ${base_url}:${port_rust}/${file_sizes[2]} \
             |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
         
-        kill -9 $rust_pid
+        kill -- -${rust_pid}
     done
 done
 
@@ -189,7 +190,7 @@ for req_size in ${total_requests_size[@]}; do
             ${base_url}:${port_rust}/${file_size} \
             |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
         
-        kill -9 $rust_pid
+        kill -- -${rust_pid}
     done
 done
 
@@ -211,7 +212,7 @@ for file_size in ${file_sizes[@]}; do
             ${base_url}:${port_rust}/${file_size} \
             |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
         
-        kill -9 $rust_pid
+        kill -- -${rust_pid}
     done
 done
 
