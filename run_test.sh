@@ -8,8 +8,8 @@ base_url="http://localhost"
 port_cpp=$((${RANDOM} + 5566))
 port_rust=$((${RANDOM} + 7878))
 fixed_num_threads=4
-num_threads_list=(1 2 4 8 16 32 64 128)
-siege_concurrencies=(1 2 4 8 16 32 64 128)
+num_threads_list=(1 2 4 8 16 32)
+siege_concurrencies=(1 2 4 8 16 32)
 siege_time="60s"
 siege_url_file="siege_test_urls.txt"
 web_root="web_root"
@@ -79,22 +79,20 @@ for req_size in ${total_requests_size[@]}; do
     for num_threads in ${num_threads_list[@]}; do
         port_cpp=$((${RANDOM} + 5566))
         # Run cpp version and test
-        cd cpp && module load gcc-12.2 && ./bin/http_server_multi -p ${port_cpp} -t ${num_threads} &
+        cd cpp && ./bin/http_server_multi -p ${port_cpp} -t ${num_threads} &
         cpp_pid=$!
 
         # Wait for server to start
         sleep 2
 
         # Start the siege
+        result_file="${test_results_dir}/cpp_n_threads_${num_threads}_reqsize_${req_size}_filesize_${file_sizes[2]}.txt"
+        echo "This is the results from cpp version with ${num_threads} threads, ${req_size} reqs and ${file_sizes[2]} file size." > ${result_file}
         ${bench_tool_bin} -c ${num_threads} \
             -r $(($req_size / $num_threads)) \
             ${base_url}:${port_cpp}/${files_dir}/${file_sizes[2]} \
-            2>&1 | tee tmp.txt
+            |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
         
-        result_file="${test_results_dir}/cpp_n_threads_${num_threads}_reqsize_${req_size}_filesize_${file_sizes[2]}.txt"
-        echo "This is the results from cpp version with ${num_threads} threads, ${req_size} reqs and ${file_sizes[2]} file size." > ${result_file}
-        tail -n 20 tmp.txt >> ${result_file}
-        rm tmp.txt
         kill -9 $cpp_pid
     done
 done
@@ -104,22 +102,20 @@ for req_size in ${total_requests_size[@]}; do
     for file_size in ${file_sizes[@]}; do
         port_cpp=$((${RANDOM} + 5566))
         # Run cpp version and test
-        cd cpp && module load gcc-12.2 && ./bin/http_server_multi -p ${port_cpp} -t ${fixed_num_threads} &
+        cd cpp && ./bin/http_server_multi -p ${port_cpp} -t ${fixed_num_threads} &
         cpp_pid=$!
 
         # Wait for server to start
         sleep 2
 
         # Start the siege
+        result_file="${test_results_dir}/cpp_n_threads_${fixed_num_threads}_reqsize_${req_size}_filesize_${file_size}.txt"
+        echo "This is the results from cpp version with ${fixed_num_threads} threads, ${req_size} reqs and ${file_size} file size." > ${result_file}
         ${bench_tool_bin} -c ${fixed_num_threads} \
             -r $(($req_size / $num_threads)) \
             ${base_url}:${port_cpp}/${files_dir}/${file_size} \
-            2>&1 | tee tmp.txt
+            |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
         
-        result_file="${test_results_dir}/cpp_n_threads_${fixed_num_threads}_reqsize_${req_size}_filesize_${file_size}.txt"
-        echo "This is the results from cpp version with ${fixed_num_threads} threads, ${req_size} reqs and ${file_size} file size." > ${result_file}
-        tail -n 20 tmp.txt >> ${result_file}
-        rm tmp.txt
         kill -9 $cpp_pid
     done
 done
@@ -129,21 +125,19 @@ for file_size in ${file_sizes[@]}; do
     for num_threads in ${num_threads_list[@]}; do
         port_cpp=$((${RANDOM} + 5566))
         # Run cpp version and test
-        cd cpp && module load gcc-12.2 && ./bin/http_server_multi -p ${port_cpp} -t ${num_threads} &
+        cd cpp && ./bin/http_server_multi -p ${port_cpp} -t ${num_threads} &
         cpp_pid=$!
 
         # Wait for server to start
         sleep 2
 
         # Start the siege
-        ${bench_tool_bin} -c ${num_threads} -t ${siege_time} \
-            ${base_url}:${port_cpp}/${files_dir}/${file_size} \
-            2>&1 | tee tmp.txt
-        
         result_file="${test_results_dir}/cpp_n_threads_${num_threads}_filesize_${file_size}_siege_time_${siege_time}.txt"
         echo "This is the results from cpp version with ${num_threads} threads, ${file_size} file size and ${siege_time} siege time." > ${result_file}
-        tail -n 20 tmp.txt >> ${result_file}
-        rm tmp.txt
+        ${bench_tool_bin} -c ${num_threads} -t ${siege_time} \
+            ${base_url}:${port_cpp}/${files_dir}/${file_size} \
+            |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
+        
         kill -9 $cpp_pid
     done
 done
@@ -165,15 +159,13 @@ for req_size in ${total_requests_size[@]}; do
         sleep 6
 
         # Start the siege
+        result_file="${test_results_dir}/rust_n_threads_${num_threads}_reqsize_${req_size}_filesize_${file_sizes[2]}.txt"
+        echo "This is the results from rust version with ${num_threads} threads, ${req_size} reqs and ${file_sizes[2]} file size." > ${result_file}
         ${bench_tool_bin} -c ${num_threads} \
             -r $(($req_size / $num_threads)) \
             ${base_url}:${port_rust}/${files_dir}/${file_sizes[2]} \
-            2>&1 | tee tmp.txt
+            |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
         
-        result_file="${test_results_dir}/rust_n_threads_${num_threads}_reqsize_${req_size}_filesize_${file_sizes[2]}.txt"
-        echo "This is the results from rust version with ${num_threads} threads, ${req_size} reqs and ${file_sizes[2]} file size." > ${result_file}
-        tail -n 20 tmp.txt >> ${result_file}
-        rm tmp.txt
         kill -9 $rust_pid
     done
 done
@@ -190,15 +182,13 @@ for req_size in ${total_requests_size[@]}; do
         sleep 6
 
         # Start the siege
+        result_file="${test_results_dir}/rust_n_threads_${fixed_num_threads}_reqsize_${req_size}_filesize_${file_size}.txt"
+        echo "This is the results from rust version with ${fixed_num_threads} threads, ${req_size} reqs and ${file_size} file size." > ${result_file}
         ${bench_tool_bin} -c ${fixed_num_threads} \
             -r $(($req_size / $num_threads)) \
             ${base_url}:${port_rust}/${files_dir}/${file_size} \
-            2>&1 | tee tmp.txt
+            |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
         
-        result_file="${test_results_dir}/rust_n_threads_${fixed_num_threads}_reqsize_${req_size}_filesize_${file_size}.txt"
-        echo "This is the results from rust version with ${fixed_num_threads} threads, ${req_size} reqs and ${file_size} file size." > ${result_file}
-        tail -n 20 tmp.txt >> ${result_file}
-        rm tmp.txt
         kill -9 $rust_pid
     done
 done
@@ -215,14 +205,12 @@ for file_size in ${file_sizes[@]}; do
         sleep 6
 
         # Start the siege
-        ${bench_tool_bin} -c ${num_threads} -t ${siege_time} \
-            ${base_url}:${port_rust}/${files_dir}/${file_size} \
-            2>&1 | tee tmp.txt
-        
         result_file="${test_results_dir}/rust_n_threads_${num_threads}_filesize_${file_size}_siege_time_${siege_time}.txt"
         echo "This is the results from rust version with ${num_threads} threads, ${file_size} file size and ${siege_time} siege time." > ${result_file}
-        tail -n 20 tmp.txt >> ${result_file}
-        rm tmp.txt
+        ${bench_tool_bin} -c ${num_threads} -t ${siege_time} \
+            ${base_url}:${port_rust}/${files_dir}/${file_size} \
+            |& grep -v 'HTTP/1.1 200' | tee -a ${result_file}
+        
         kill -9 $rust_pid
     done
 done
