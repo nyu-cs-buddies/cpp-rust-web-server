@@ -41,3 +41,7 @@ rust/*/target/
 # External utilities
 ext_utils/
 
+# test data and test results
+test_results/
+web_root/10*
+tmp.txt
