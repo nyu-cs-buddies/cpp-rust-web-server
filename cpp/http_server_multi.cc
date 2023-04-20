@@ -65,7 +65,6 @@ void handle_connection(int newsockfd) {
               << std::endl;
   }
 
-  // TODO(allenpthuang): something might go wrong here; investigate.
   // workaround atm: check token != NULL
   std::string method, uri, protocol;
   char* saveptr;
@@ -73,19 +72,16 @@ void handle_connection(int newsockfd) {
   if (token != NULL) {
     method = token;
   }
-  // std::string method(token);
 
   token = strtok_r(NULL, " \t", &saveptr);
   if (token != NULL) {
     uri = token;
   }
-  // std::string uri(token);
   
   token = strtok_r(NULL, " \t\r\n", &saveptr);
   if (token != NULL) {
     protocol = token;
   }
-  // std::string protocol(token);
 
   if (verbose) {
     std::cout << "=== Parsed HTTP request ===" << std::endl

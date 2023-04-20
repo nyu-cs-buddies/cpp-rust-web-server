@@ -43,12 +43,6 @@ void ThreadPool::add_task(const std::function<void()>& task) {
 };
 
 void ThreadPool::stop() {
-    // std::condition_variable cv;
-  // std::unique_lock<std::mutex> lock(busy_thread_count_mutex);
-  // cv.wait(lock, [this] {
-  //     return (this->busy_thread_count == 0) && this->tasks.empty();
-  // });
-  
   // TODO(allenpthuang): naive workaround; might need to use condition variable.
   while (tasks.size() > 0) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -62,37 +56,4 @@ void ThreadPool::stop() {
     thread.join();
   }
   stopped = true;
-}
-
-
-
-void hello_world() {
-  // {
-  //   std::unique_lock<std::mutex> lock(exec_mutex);
-  //   exec_count++;
-  // }
-  std::cout << "Hello world from " << std::this_thread::get_id() << std::endl;
-}
-
-void test() {
-  ThreadPool pool(4);
-  pool.add_task([]() {
-    std::cout << "Hello, world!" << std::endl;
-  });
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.add_task(hello_world);
-  pool.stop();
-  // sleep(1);
-  // {
-  //   std::unique_lock<std::mutex> lock(exec_mutex);
-  //   std::cout << "exec_count for hello_world() = " << exec_count << std::endl;
-  // }
 }
