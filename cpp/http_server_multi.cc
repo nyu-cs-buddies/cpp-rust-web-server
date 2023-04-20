@@ -68,19 +68,20 @@ void handle_connection(int newsockfd) {
   // TODO(allenpthuang): something might go wrong here; investigate.
   // workaround atm: check token != NULL
   std::string method, uri, protocol;
-  auto token = strtok(buf, " \t\r\n");
+  char* saveptr;
+  auto token = strtok_r(buf, " \t\r\n", &saveptr);
   if (token != NULL) {
     method = token;
   }
   // std::string method(token);
 
-  token = strtok(NULL, " \t");
+  token = strtok_r(NULL, " \t", &saveptr);
   if (token != NULL) {
     uri = token;
   }
   // std::string uri(token);
   
-  token = strtok(NULL, " \t\r\n");
+  token = strtok_r(NULL, " \t\r\n", &saveptr);
   if (token != NULL) {
     protocol = token;
   }
